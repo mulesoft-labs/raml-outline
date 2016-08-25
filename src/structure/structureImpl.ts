@@ -201,6 +201,8 @@ function getDecorator(node: structure.StructureNode) : structure.Decorator {
 function hlNodeToStructureNode(hlNode : hl.IParseResult,
     selected : hl.IParseResult) : structure.StructureNode {
 
+    if (!hlNode) return null;
+    
     var result = new StructureNodeImpl(hlNode);
 
     var labelProvider = getLabelProvider(result);
@@ -228,10 +230,29 @@ function hlNodeToStructureNode(hlNode : hl.IParseResult,
     return result;
 }
 
+function cloneNode(toClone: structure.StructureNode) : structure.StructureNode {
+    var result : StructureNodeImpl = new StructureNodeImpl(toClone.getSource())
+
+    result.text = toClone.text
+    result.typeText = toClone.typeText
+    result.icon = toClone.icon
+    result.textStyle = toClone.textStyle
+    result.children = <any>toClone.children
+    result.key = toClone.key
+    result.start = toClone.start
+    result.end = toClone.end
+    result.selected = toClone.selected
+    result.category = toClone.category
+
+    return result;
+}
+
 function filterTreeByCategory(root : structure.StructureNode,
-    categoryName : string) : void {
+    categoryName : string) : structure.StructureNode {
 
     if (!root.children) return;
+
+    var result = cloneNode(root)
 
     var filteredChildren = root.children;
 
@@ -247,7 +268,8 @@ function filterTreeByCategory(root : structure.StructureNode,
         }
     }
 
-    root.children = filteredChildren;
+    result.children = filteredChildren;
+    return result;
 }
 
 function buildTreeRecursively(structureNode : structure.StructureNode,
@@ -320,6 +342,8 @@ export function getStructure(categoryName? : string) : structure.StructureNode {
     if (!_astProvider) return null;
 
     var hlRoot = _astProvider.getASTRoot();
+    if (!hlRoot) return null;
+
     var _selected = _astProvider.getSelectedNode();
 
     var structureRoot = hlNodeToStructureNode(hlRoot, _selected);
@@ -330,8 +354,34 @@ export function getStructure(categoryName? : string) : structure.StructureNode {
 
     buildTreeRecursively(structureRoot, contentProvider);
 
-    filterTreeByCategory(structureRoot, categoryName);
+    var result = filterTreeByCategory(structureRoot, categoryName);
 
-    return structureRoot;
+    return result;
 }
 
+export function getStructureForAllCategories() : {[categoryName:string] : structure.StructureNode} {
+    if (!_astProvider) return null;
+
+    var hlRoot = _astProvider.getASTRoot();
+    if (!hlRoot) return null;
+
+    var _selected = _astProvider.getSelectedNode();
+
+    var structureRoot = hlNodeToStructureNode(hlRoot, _selected);
+    if (!structureRoot) return null;
+
+    var contentProvider = _contentProvider;
+    if (!contentProvider) contentProvider = defaultContentProvider;
+
+    buildTreeRecursively(structureRoot, contentProvider);
+
+    var result : {[categoryName:string] : structure.StructureNode} = {};
+    for (var categoryName in _categoryFilters) {
+        if (_categoryFilters.hasOwnProperty(categoryName)) {
+            var filteredTree = filterTreeByCategory(structureRoot, categoryName);
+            result[categoryName] = filteredTree;
+        }
+    }
+
+    return result;
+}

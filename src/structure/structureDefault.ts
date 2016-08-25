@@ -41,6 +41,8 @@ class DefaultLabelProvider {
             }
         }
 
+        if (!node.lowLevel()) return "";
+        
         return node.name();
     }
 

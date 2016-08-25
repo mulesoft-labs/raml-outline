@@ -148,6 +148,14 @@ export function getStructure(categoryName : string) : structure.StructureNode {
 }
 
 /**
+ * Returns a map from category name to a category structure subtree.
+ * @returns {{}}
+ */
+export function getStructureForAllCategories() : {[categoryName:string] : structure.StructureNode} {
+    return structureImpl.getStructureForAllCategories()
+}
+
+/**
  * Adds another decoration to the default decorator, allowing simple set up
  * of decorations as a map from node type to its icon and text style.
  * @param nodeType
