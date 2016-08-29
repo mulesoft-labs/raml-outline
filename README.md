@@ -1,65 +1,122 @@
-# raml-actions
+# raml-outline
 
-[![Build Status](https://travis-ci.org/mulesoft/raml-actions.svg?branch=code)](https://travis-ci.org/mulesoft/raml-actions)
+[![Build Status](https://travis-ci.org/mulesoft/raml-outline.svg?branch=code)](https://travis-ci.org/mulesoft/raml-outline)
 
-This is a central place for RAML context-dependent actions.
+This is a central place for RAML outline.
 
 ## Getting Started
 ```typescript
-import actions = require("raml-actions")
+import ramlOutline = require("raml-outline")
 
-var editorProvider = {
-       getCurrentEditor() {
-           ...
-           return editor
-       }
+//intializing AST provider and outline generally
+
+var astProvider = {
+                  
+  getASTRoot() {
+    ...
+  },
+  
+  getSelectedNode() {
+      ...
+  }
 }
-actions.setEditorProvider(editorProvider)
 
-actions.intializeStandardActions()
+ramlOutline.setASTProvider(astProvider);
+ramlOutline.initialize();
+
+//Adding category filters, which split nodes into categories
+
+var ResourcesCategory = "ResourcesCategory"
+var SchemasAndTypesCategory = "SchemasAndTypesCategory"
+var ResourceTypesAndTraitsCategory = "ResourceTypesAndTraitsCategory"
+var OtherCategory = "OtherCategory"
+
+function isResource(node) {
+    ...
+}
+function isSchemaOrType(node) {
+    ...
+}
+function isResourceTypeOrTrait(node) {
+    ...
+}
+function isOther(node) {
+    ...
+}
+
+ramlOutline.addCategoryFilter(ResourcesCategory, isResource);
+ramlOutline.addCategoryFilter(SchemasAndTypesCategory, isSchemaOrType);
+ramlOutline.addCategoryFilter(ResourceTypesAndTraitsCategory, isResourceTypeOrTrait);
+ramlOutline.addCategoryFilter(OtherCategory, isOther);
+
+//adding decorations to node types
+
+ramlOutline.addDecoration(ramlOutline.NodeType.ATTRIBUTE, {
+    icon: UI.Icon.ARROW_SMALL_LEFT,
+    textStyle: UI.TextClasses.NORMAL
+});
+
+ramlOutline.addDecoration(ramlOutline.NodeType.RESOURCE, {
+    icon: UI.Icon.PRIMITIVE_SQUARE,
+    textStyle: UI.TextClasses.HIGHLIGHT
+});
 
 ...
 
-// availableActions now contain the list of all actions,
-// available and executable for the current selection
-var availableActions = actions.calculateCurrentActions(actions.TARGET_RAML_EDITOR_NODE)
+// Now at any point for any category we can ask for a subtree and convert it to JSON
 
-availableActions[0].onClick()
+var resourceCategoryOutline = ramlOutline.getStructure(ResourcesCategory).toJSON()
+
+//each node contains:
+//resourceCategoryOutline.text - Node label text to be displayed.
+//resourceCategoryOutline.typeText - Node type label, if any.
+//resourceCategoryOutline.icon - Node icon, set using node type based decorations, or directly via Decorator
+//resourceCategoryOutline.textStyle - Node test style, set using node type based decorations, or directly via Decorator
+//resourceCategoryOutline.key - Unique node identifier, is set if there is key provider assigned. 
+//resourceCategoryOutline.start - Node start position.
+//resourceCategoryOutline.end - Node start position.
+//resourceCategoryOutline.selected - Whether the node is selected.
+//resourceCategoryOutline.category - Node category.
+//resourceCategoryOutline.children - Node children.
+
 ```
 
 ## Code highlights
 
-### Actions core
-`addAction` method contributes new action to the system.
+### Outline core
 
-`IContextDependedAction` - this is the main interface for context-dependent action. Besides `name`, `label`, `target` and `category` properties, each context-dependent action should provide the following:
-* `stateCalculator`, which is responsible for calculating the current context state for the action.
-* `shouldDisplay` visibility filter, which decides whether the action is available in the calculated context state.
-* `onClick` method, which recieves calculated context state as an argument and should perform the actual action execution
+`setASTProvider` method sets AST provider to feed outline with parser data.
 
-`calculateCurrentActions` method calculates actions, which are available in the current context. Calculated actions differ from the ones contributed to the system via `addAction` as besides meta-information like `name`, `label` etc they do only contain a single method `onClick` taking no arguments, everything else regarding context state calculation, checks, and arguments passing is performed by the system.
+`addCategoryFilter` method creates new category, provided the name and a node filtering method.
 
-### Shared state calculation
-Extending `CommonASTStateCalculator` in action's state calculator allows reusing the shared state, being calculated once for all actions, this reduces calculation time. Subclasses then should use the shared state containing general data like currently selected AST node to calculate state more specific for the action.
+`addDecorator` method sets up a new decorator, being able to provide icon and text style for the node.
 
-It is mandatory to set editor provider to the system by calling `setEditorProvider` method so that the system can be calculating the shared state.
+`addLabelProvider` method sets up a new label provider, being able to provide label and type text for the node.
 
-It is also recommended to provide the system with more refined AST provider by calling `setASTProvider`, otherwise the system will build AST and find currently selected node using editor's text and cursor position.
+`setVisibilityFilter` method sets up a way to filter out nodes, which should not be visible.
 
-Calling `setASTModifier` will provide actions with ability to modify AST.
+`setContentProvider` method sets up a way to convert AST tree to outline tree. Not recommended to override the default content provider.
 
-### UI actions
-`IContextDependedAction` is an interface for actions with no information required from user besides the current context.
+`setKeyProvider` if set, will be asked to provide an unique key for each node.
 
-If action requires additional input, `IContextDependedUIAction` should be used instead.
-* `initialUIStateConvertor` converts context state to the initial UI state (which should be serializable for client-server scenario), which will be the input data for UI.
-* `displayUI` is a method, which will be called by the system; the method is responsible for displaying UI basing on the initial UI state, and should call back when finished providing the final UI state (the state containing user input). This state object should also be serializable for client-server scenario.
+`getStructure` method returns outline tree for the specified category, or in general.
+`getStructureForAllCategories` method returns the map from category name to the category sub-tree.
 
-In case of UI actions, `onClick` method of the action recieves both context state and final UI state as arguments.
+### Defaults
+Defaults module simplify outline usage by not making the user to implement decorators, label providers etc.
+ 
+Defaults module provide outline with default label provider, key provider, visibility filter, and decorator, which is based on simplified decorations.
 
-### Context menu
-`registerContributor` method allows registering context menu contributors, which can provide existing menu items.
+Besides setting AST provider, user should set up categories if needed, and add static decorations for node types like this:
 
-`calculateMenuItemsTree` method calculates context menu tree for the current context.
+ramlOutline.addDecoration(ramlOutline.NodeType.ATTRIBUTE, {
+    icon: UI.Icon.ARROW_SMALL_LEFT,
+    textStyle: UI.TextClasses.NORMAL
+});
 
-One of the standard context menu contributors is the one using context actions for form the context menu.
+ramlOutline.addDecoration(ramlOutline.NodeType.RESOURCE, {
+    icon: UI.Icon.PRIMITIVE_SQUARE,
+    textStyle: UI.TextClasses.HIGHLIGHT
+});
+
+Here, node type is one of the supported node types list, and icon and textStyle are arbitrary strings, which will then be put into the respective node fields.
