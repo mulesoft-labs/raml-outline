@@ -60,11 +60,10 @@ export function hasDefault(property: hl.IProperty) {
 
 export abstract class Item implements detailsInterfaces.DetailsItem {
 
-    public title : string;
-    public description : string
-    public parent : Item;
-    public error : string
-    public children : Item[] = []
+    private title : string;
+    private description : string
+    private parent : Item;
+    private error : string
 
     constructor(title : string , description:string=""){
         this.title = title;
@@ -109,11 +108,42 @@ export abstract class Item implements detailsInterfaces.DetailsItem {
     clearErrors(){
         this.error = null;
     }
+
+    /**
+     * Node title.
+     */
+    title() {
+        return this.title;
+    }
+
+    /**
+     * Node description
+     */
+    description() {
+        return this.description;
+    }
+
+    /**
+     * Node type name
+     */
+    abstract type() : detailsInterfaces.DetailsItemType;
+
+    /**
+     * Error, associated with the node.
+     */
+    error() : string {
+        return this.error;
+    }
+
+    /**
+     * Node children.
+     */
+    children() {
+        return [];
+    }
 }
 
 class PropertyEditorInfo extends Item {
-
-    fld:UI.BasicComponent<any>;
 
     constructor(public property:hl.IProperty,protected node:hl.IHighLevelNode){
         super(property.nameId(),property.description());
@@ -131,15 +161,7 @@ class PropertyEditorInfo extends Item {
         this.setError(null);
     }
 
-    toLocalValue(inputValue) {
-        return inputValue;
-    }
-
-    toUIValue(value) {
-        return value;
-    }
-
-    fromModelToEditor(){
+    getValue() : string {
         var attr = this.node.attr(this.property.nameId());
 
         if (attr || this.hasDefault()){
@@ -149,67 +171,27 @@ class PropertyEditorInfo extends Item {
                 val="";
             }
 
-            this.fld.getBinding().set(this.toUIValue("" + val));
-        }
-    }
-    rendered:boolean=false
-    update=(newValue, oldValue)=>{
-        if(!this.rendered) {
-            return;
+            return val;
         }
 
-        this.fromEditorToModel(newValue, oldValue);
+        return null;
     }
 
-    render(){
-        var container=new UI.WrapPanel();
-        this.errorLabel=UI.label("",UI.Icon.BUG,UI.TextClasses.ERROR);
-        this.errorLabel.setDisplay(false);
-        this.errorLabel.setStyle("margin-left",(this._title.length+1)+"ch")
+    toJSON() : detailsInterfaces.DetailsValuedItemJSON {
+        return {
 
-        var field=this.createField();
-        this.fld=<UI.BasicComponent<any>>field;
-        field.getBinding().addListener(this.update)
-        container.setCaption(this.title());
-        this.fromModelToEditor();
-        container.addChild(field);
-        var attr=this.node.attr(this.property.nameId());
-        if (attr){
-            var val=attr.value();
-        }
-        var np=(<def.Property>this.property).valueDocProvider();
-        if (np){
-            var ac=np(val);
-            if (ac==null){
-                ac="";
-            }
-            var lbl=UI.label(ac,UI.Icon.INFO,UI.TextClasses.SUBTLE);
-            if (!ac){
-                lbl.setDisplay(false)
-            }
-            container.addChild(lbl);
-            field.getBinding().addListener(x=>{
-                var newDoc=np(field.getBinding().get());
-                if (!newDoc){
-                    newDoc="";
-                }
-                lbl.setText(newDoc);
-                lbl.setDisplay(newDoc.length>0)
-            });
-            lbl.setStyle("margin-left",(this._title.length+1)+"ch");
-        }
-        if (attr&&attr.lowLevel().includePath()){
-            container.addChild(UI.label("Included from "+attr.lowLevel().includePath(),UI.Icon.INFO,UI.TextClasses.SUBTLE));
-        }
-        //container.addChild(this.descLabel)
-        container.addChild(this.errorLabel);
+            title : this.title(),
 
-        this.rendered = true;
+            description : this.description(),
 
-        return container;
-    }
-    createField():UI.IField<any>{
-        return UI.texfField(this.needsSeparateLabel()?"":this.property.nameId(),"",x=>{});
+            type : this.type(),
+
+            error : this.error(),
+
+            children : <detailsInterfaces.DetailsItemJSON[]>this.children(),
+
+            valueText : this.getValue()
+        };
     }
 }
 
@@ -246,111 +228,25 @@ class Category extends Item{
         return it;
     }
 
-    descriptionLabel:UI.UIComponent;
-    subCategories: UI.UIComponent;
-    _result:UI.Panel;
-    render(r:RenderingOptions={}):UI.UIComponent{
-        var section=this.createSection(r);
-        this._result=section;
-        if (this.description&&r.showDescription){
-            this.descriptionLabel=UI.label(this.description);
-            section.addChild(this.descriptionLabel);
-        }
-        this.contributeTop(section);
-        this.plainChildren().forEach(x=>this.addChild(section,x));
-
-        var wrappedChild=this.createWrappedChild(section);
-        this.subCategories=wrappedChild;
-        var cats=this.categories()
-        var remap={}
-        cats.forEach(x=>remap[x.title()]=x);
-        var newCats=[];
-        if (remap["General"]){
-            newCats.push(remap["General"]);
-            delete remap["General"];
-        }
-        if (remap["Facets"]){
-            newCats.push(remap["Facets"]);
-            delete remap["Facets"];
-        }
-        for (var c in remap){
-            newCats.push(remap[c]);
-        }
-        newCats.forEach(x=>this.addChild(wrappedChild,x));
-        return section;
-    }
-    detach(){
-        super.detach();
-        this._result.dispose();
-    }
-
-    createSection(r:RenderingOptions):UI.Panel{
-        if (r.showHeader) {
-            return new UI.Section(<any>UI.h3(this.title()), false)
-        }
-        var pnl=new UI.Panel();
-        pnl.setCaption(this.title());
-        return pnl;
-    }
-    createWrappedChild(section:UI.UIComponent){
-        return section;
-    }
-
-
-    addChild(section:UI.UIComponent, item:Item){
-        var child=item.render();
-        if (section instanceof UI.TabFolder){
-            var tf=<UI.TabFolder>section;
-            tf.add(child.caption(),UI.Icon.NONE,child);
-        }
-        else {
-            if (item.needsSeparateLabel()){
-                var firstLabel = UI.label(item.title());
-
-                firstLabel.margin(0, 5, 0, 0);
-
-                section.addChild(firstLabel);
-                section.addChild(UI.label(item.description));
-            }
-            section.addChild(child);
-        }
-    }
-
-    contributeTop(section:UI.Panel){
-
-    }
-    dispose():void{
-
-    }
-    setError(text:string){
-
-    }
     clearErrors(){
         this._children.forEach(x=>x.clearErrors())
     }
+
     update(i:Item){
 
+    }
+
+    type() : detailsInterfaces.DetailsItemType {
+        return detailsInterfaces.DetailsItemType.CATEGORY;
     }
 }
 
 class TopLevelNode extends Category{
 
-
-    detach(){
-        super.detach();
-        this._result.dispose();
+    type() : detailsInterfaces.DetailsItemType {
+        return detailsInterfaces.DetailsItemType.ROOT;
     }
 
-    createWrappedChild(section:UI.UIComponent){
-        var tf=new UI.TabFolder()
-        tf.setOnSelected(()=>{
-            if (!inRender) {
-                lastSelectedCaption = (tf.selectedComponent().caption());
-            }
-        });
-        section.addChild(tf);
-        return tf;
-    }
     subCategoryByNameOrCreate(name:string){
         var item=_.find(this.children(),x=>x.title()==name);
         if (!item){
@@ -367,51 +263,6 @@ class TopLevelNode extends Category{
             return;
         }
         this.subCategoryByNameOrCreate(name).add(it);
-    }
-
-
-    errorLabel:UI.TextElement<any>
-    ep:UI.Panel=null;
-    contributeTop(section:UI.Panel){
-        this.errorLabel=UI.label("",UI.Icon.BUG,UI.TextClasses.ERROR);
-        this.ep=UI.hc(this.errorLabel);
-        this.ep.setDisplay(false)
-        section.addChild(this.ep);
-    }
-
-    _panel:UI.Panel;
-    _options:RenderingOptions;
-
-    render(r: RenderingOptions={}){
-        inRender=true;
-        try {
-            var result = super.render(r);
-            this._options = r;
-            this._panel = <any>result;
-            var tf = <UI.TabFolder>this.subCategories;
-            for (var n = 0; n < tf.tabsCount(); n++) {
-                var item = tf.get(n);
-                if (item.header == lastSelectedCaption) {
-                    tf.setSelectedIndex(n);
-                    return result;
-                }
-            }
-            var documentation="";
-            if (this.node.property()){
-                documentation=this.node.property().description();
-            }
-            else{
-                documentation=this.node.definition().description();
-            }
-            if (documentation.length&&!r.showDescription){
-                result.addChild(UI.html("<hr/>"))
-                result.addChild(UI.label(documentation,UI.Icon.INBOX,UI.TextClasses.SUBTLE))
-            }
-            this.update(this);
-            return result;
-        } finally {
-            inRender=false;
-        }
     }
 
     constructor(protected node:hl.IHighLevelNode){
@@ -538,6 +389,11 @@ class TopLevelNode extends Category{
 }
 
 class StructuredField extends PropertyEditorInfo{
+
+    type() : detailsInterfaces.DetailsItemType {
+        return detailsInterfaces.DetailsItemType.STRUCTURED;
+    }
+
     constructor(pr:hl.IProperty,node:hl.IHighLevelNode,private stvalue:hl.IStructuredValue){
         super(pr,node);
     }
@@ -548,9 +404,9 @@ class StructuredField extends PropertyEditorInfo{
 }
 
 class JSONSchemaField extends PropertyEditorInfo{
-    createField(){
-        var editor = new JSONField("",x=>{});
-        return editor;
+
+    type() : detailsInterfaces.DetailsItemType {
+        return detailsInterfaces.DetailsItemType.JSONSCHEMA;
     }
 
     needsSeparateLabel(){
@@ -559,6 +415,10 @@ class JSONSchemaField extends PropertyEditorInfo{
 }
 
 class TreeField extends UI.Panel implements UI.IField<any>{
+
+    type() : detailsInterfaces.DetailsItemType {
+        return detailsInterfaces.DetailsItemType.TREE;
+    }
 
     constructor(private input:lowLevel.ILowLevelASTNode,caption:string) {
         super();
@@ -627,9 +487,9 @@ class TreeField extends UI.Panel implements UI.IField<any>{
 }
 
 class XMLSchemaField extends PropertyEditorInfo{
-    createField(){
-        var editor = new XMLField("",x=>{});
-        return editor;
+
+    type() : detailsInterfaces.DetailsItemType {
+        return detailsInterfaces.DetailsItemType.XMLSCHEMA;
     }
 
     needsSeparateLabel(){
@@ -638,6 +498,10 @@ class XMLSchemaField extends PropertyEditorInfo{
 }
 
 class TypeSelectBox extends SelectBox {
+
+    type() : detailsInterfaces.DetailsItemType {
+        return detailsInterfaces.DetailsItemType.TYPESELECT;
+    }
 
     fromEditorToModel(newValue? : any, oldValue? : any){
         //current implementation only allows changing the facets of certain types for safety
@@ -697,8 +561,42 @@ class TypeSelectBox extends SelectBox {
     }
 }
 
+var valueOptions = function (x:hl.IProperty, node:hl.IHighLevelNode):string[] {
+    var vls = search.enumValues(x,node);
+    if (universehelpers.isNameProperty(x)){
+        if (node.definition().isAssignableFrom(universe.Universe10.TypeDeclaration.name)){
+            if (node.property()&&universehelpers.isBodyProperty(node.property())){
+                if (!(node.property() instanceof def.UserDefinedProp)) {
+                    if (node.parent()&&
+                        universehelpers.isMethodType(node.parent().definition())){
+                        return ["application/json", "application/xml","multipart/form-data","application/x-www-form-urlencoded"]
+                    }
+                    return ["application/json", "application/xml"]
+                }
+            }
+        }
+    }
+    if ((!vls) || vls.length == 0) {
+        var sug = (<def.Property>x).suggester()
+        if (sug) {
+            vls = sug(node);
+
+        }
+        if ((!vls) || vls.length == 0) {
+            vls = (<def.Property>x).getOftenKeys();
+
+        }
+    }
+    return _.unique(vls);
+};
+
 class SelectBox extends PropertyEditorInfo{
-    createField(){
+
+    type() : detailsInterfaces.DetailsItemType {
+        return detailsInterfaces.DetailsItemType.SELECTBOX;
+    }
+
+    calculateOptions() : string[] {
         var options= valueOptions(this.property, this.node);
 
 
@@ -711,15 +609,27 @@ class SelectBox extends PropertyEditorInfo{
         if (!this.property.isRequired()&&!this.property.getAdapter(def.RAMLPropertyService).isKey()){
             options=[""].concat(options);
         }
-        var select= new UI.SelectField(this.property.nameId(),x=>{},"",UI.Icon.NONE,options);
-        select.getActualField().setOptions(options)
-        // select.clearUI();
-        return select;
+
+        return options;
     }
 
+    toJSON() : detailsInterfaces.DetailsItemJSONWithOptions {
+        var superResults = super.toJSON();
+
+        var results = <detailsInterfaces.DetailsItemJSONWithOptions> superResults;
+
+        results.options = this.calculateOptions();
+
+        return results;
+    }
 }
 
 class SimpleMultiEditor extends PropertyEditorInfo{
+
+    type() : detailsInterfaces.DetailsItemType {
+        return detailsInterfaces.DetailsItemType.MULTIEDITOR;
+    }
+
     fromEditorToModel(){
         var field=this.fld;
         var vl=field.getBinding().get();
@@ -754,6 +664,11 @@ class SimpleMultiEditor extends PropertyEditorInfo{
 }
 
 class CheckBoxField extends PropertyEditorInfo{
+
+    type() : detailsInterfaces.DetailsItemType {
+        return detailsInterfaces.DetailsItemType.CHECKBOX;
+    }
+
     createField(){
         return new CheckBox2(this.property.nameId(),UI.Icon.NONE,x=>{});
     }
@@ -776,6 +691,11 @@ class CheckBoxField extends PropertyEditorInfo{
 }
 
 class MarkdownField extends PropertyEditorInfo{
+
+    type() : detailsInterfaces.DetailsItemType {
+        return detailsInterfaces.DetailsItemType.MARKDOWN;
+    }
+
     createField(){
         var editor = new MarkdownFieldUI("",x=>{});
         return editor;
@@ -788,6 +708,10 @@ class MarkdownField extends PropertyEditorInfo{
 }
 
 export class TypeDisplayItem extends Item{
+
+    type() : detailsInterfaces.DetailsItemType {
+        return detailsInterfaces.DetailsItemType.TYPEDISPLAY;
+    }
 
     constructor(private node:hl.IHighLevelNode){
         super("Type","");

@@ -14,6 +14,11 @@ export interface DetailsItemJSON {
     description : string
 
     /**
+     * Node type name
+     */
+    type : string,
+
+    /**
      * Error, associated with the node.
      */
     error : string
@@ -24,10 +29,66 @@ export interface DetailsItemJSON {
     children : DetailsItemJSON[]
 }
 
+export interface DetailsValuedItemJSON extends DetailsItemJSON {
+
+    /**
+     * Value text.
+     */
+    valueText : string
+}
+
+export interface DetailsItemJSONWithOptions extends DetailsValuedItemJSON {
+
+    /**
+     * Potential options.
+     */
+    options : string[]
+}
+
+export enum DetailsItemType {
+    ROOT,
+    CATEGORY,
+    CHECKBOX,
+    JSONSCHEMA,
+    XMLSCHEMA,
+    MARKDOWN,
+    SELECTBOX,
+    MULTIEDITOR,
+    TREE,
+    STRUCTURED,
+    TYPEDISPLAY,
+    TYPESELECT
+}
+
 /**
  * Details tree node.
  */
-export interface DetailsItem extends DetailsItemJSON {
+export interface DetailsItem {
+
+    /**
+     * Node title.
+     */
+    title() : string;
+
+    /**
+     * Node description
+     */
+    description() : string;
+
+    /**
+     * Node type name
+     */
+    type() : DetailsItemType;
+
+    /**
+     * Error, associated with the node.
+     */
+    error() : string;
+
+    /**
+     * Node children.
+     */
+    children() : DetailsItem[];
 
     /**
      * Node parent.
