@@ -57,7 +57,10 @@ export enum DetailsItemType {
     TREE,
     STRUCTURED,
     TYPEDISPLAY,
-    TYPESELECT
+    TYPESELECT,
+    JSONEXAMPLE,
+    XMLEXAMPLE,
+    ATTRIBUTETEXT
 }
 
 /**
@@ -68,37 +71,37 @@ export interface DetailsItem {
     /**
      * Node title.
      */
-    title() : string;
+    getTitle() : string;
 
     /**
      * Node description
      */
-    description() : string;
+    getDescription() : string;
 
     /**
      * Node type name
      */
-    type() : DetailsItemType;
+    getType() : DetailsItemType;
 
     /**
      * Error, associated with the node.
      */
-    error() : string;
+    getError() : string;
 
     /**
      * Node children.
      */
-    children() : DetailsItem[];
+    getChildren() : DetailsItem[];
 
     /**
      * Node parent.
      */
-    parent() : DetailsItem;
+    getParent() : DetailsItem;
 
     /**
      * Tree root.
      */
-    root() : DetailsItem;
+    getRoot() : DetailsItem;
 
     /**
      * Converts this node and its subnodes to JSON, recursivelly.
