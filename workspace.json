@@ -1,8 +1,8 @@
 {
-  "raml-structure" : {
+  "raml-outline" : {
     "build" : "npm run build",
     "test" : "npm run test",
-    "gitUrl" : "https://github.com/mulesoft/raml-actions.git",
+    "gitUrl" : "https://github.com/mulesoft/raml-outline.git",
     "gitBranch" : false,
     "installTypings" : true
   },
