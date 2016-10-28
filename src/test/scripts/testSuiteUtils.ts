@@ -151,7 +151,8 @@ ${label1}: ${strValue1}`
 
 function getOutlineJSON(api) : any {
 
-    outlineInitializer.initialize(api);
+    var highLevelNode = api.highLevel();
+    outlineInitializer.initialize(highLevelNode);
 
     var categoryToStructure = index.getStructureForAllCategories();
 
@@ -161,7 +162,7 @@ function getOutlineJSON(api) : any {
         var specificCategoryStructureNode = categoryToStructure[categoryName];
         var specificCategoryStructureJSON = specificCategoryStructureNode.toJSON();
 
-        result.categoryName = specificCategoryStructureJSON;
+        result[categoryName] = specificCategoryStructureJSON;
     }
 
     return result;
@@ -234,7 +235,7 @@ export function testOutline (
     }
 }
 
-export function ramlFirstLine(content:string):RegExpMatchArray{
+export function getRamlFirstLine(content:string):RegExpMatchArray{
     return content.match(/^\s*#%RAML\s+(\d\.\d)\s*(\w*)\s*$/m);
 }
 
@@ -380,7 +381,7 @@ export function extractContent(folderAbsPath:string):DirectoryContent{
     var ramlFiles:RamlFile[] = [];
     for(var f of ramlFilesAbsPaths){
         var content = fs.readFileSync(f).toString();
-        var ramlFirstLine = ramlFirstLine(content);
+        var ramlFirstLine = getRamlFirstLine(content);
         if(!ramlFirstLine||ramlFirstLine.length<2){
             continue;
         }

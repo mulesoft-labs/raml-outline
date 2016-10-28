@@ -7,7 +7,9 @@
     "pullall" : "dev-env-installer pullall",
     "buildall" : "dev-env-installer buildall",
     "testall" : "dev-env-installer testall",
-    "devInstall": "dev-env-installer install"
+    "devInstall": "dev-env-installer install",
+    "test" : "gulp test",
+    "generateStructureSuite": "node dist/test/scripts/generateTestSuite.js && tsc src/test/structure_suite.ts --outDir dist -m commonjs --sourceMap"
   },
   "dependencies": {
     "underscore": "^1.8.3",
@@ -24,9 +26,15 @@
     "url": "https://github.com/mulesoft/raml-structure/issues"
   },
   "devDependencies": {
+    "gulp": "^3.9.1",
     "typescript": "1.8.7",
     "typings": "^0.5.1",
     "dev-env-installer":"0.0.5",
-    "rimraf":"*"
+    "rimraf":"*",
+    "mocha": "^2.2.1",
+    "chai": "^2.2.0",
+    "chai-as-promised": "^5.2.0",
+    "gulp-istanbul" : "*",
+    "gulp-mocha": "^2.2.0"
   }
 }
