@@ -3,7 +3,7 @@
   "version": "0.0.2",
   "main": "dist/index.js",
   "scripts": {
-    "build": "rimraf dist && tsc",
+    "build": "rimraf dist && tsc && npm run generateStructureSuite",
     "pullall" : "dev-env-installer pullall",
     "buildall" : "dev-env-installer buildall",
     "testall" : "dev-env-installer testall",
