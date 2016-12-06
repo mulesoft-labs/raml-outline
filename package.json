@@ -26,7 +26,13 @@
     "url": "https://github.com/mulesoft/raml-structure/issues"
   },
   "devDependencies": {
-    "gulp": "^3.9.1",
+    "gulp": "^3.8.11",
+    "gulp-compass": "^2.0.4",
+    "gulp-connect": "^2.2.0",
+    "gulp-mocha": "^2.0.1",
+    "gulp-rename": "^1.2.2",
+    "gulp-sourcemaps": "^1.5.2",
+    "gulp-typescript": "^2.11.0",
     "typescript": "1.8.7",
     "typings": "^0.5.1",
     "dev-env-installer":"0.0.5",
@@ -34,7 +40,6 @@
     "mocha": "^2.2.1",
     "chai": "^2.2.0",
     "chai-as-promised": "^5.2.0",
-    "gulp-istanbul" : "*",
-    "gulp-mocha": "^2.2.0"
+    "gulp-istanbul" : "*"
   }
 }
