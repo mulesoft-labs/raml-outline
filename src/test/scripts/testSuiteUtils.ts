@@ -654,7 +654,10 @@ function getDetailsJSON(api : parser.hl.BasicNode, position : number) : any {
 
     outlineInitializer.initialize2(astProvider);
 
-    return index.getDetailsJSON(position);
+    outlineInitializer.initialize2(astProvider);
+    var json: any = index.getDetailsJSON(position);
+    json["nodeId"] = astProvider.getSelectedNode().id();
+    return json;
 }
 
 export function testDetails (
