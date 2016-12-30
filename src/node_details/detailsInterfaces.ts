@@ -29,6 +29,9 @@ export interface DetailsItemJSON {
     children : DetailsItemJSON[]
 }
 
+/**
+ * Details item having a value text.
+ */
 export interface DetailsValuedItemJSON extends DetailsItemJSON {
 
     /**
@@ -37,7 +40,10 @@ export interface DetailsValuedItemJSON extends DetailsItemJSON {
     valueText : string
 }
 
-export interface DetailsItemJSONWithOptions extends DetailsValuedItemJSON {
+/**
+ * Details item having potential value options
+ */
+export interface DetailsItemWithOptionsJSON extends DetailsValuedItemJSON {
 
     /**
      * Potential options.
@@ -45,6 +51,9 @@ export interface DetailsItemJSONWithOptions extends DetailsValuedItemJSON {
     options : string[]
 }
 
+/**
+ * Type of details item
+ */
 export enum DetailsItemType {
     ROOT,
     CATEGORY,

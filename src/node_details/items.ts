@@ -159,7 +159,7 @@ export abstract class PropertyItem extends Item {
 
             description : this.getDescription(),
 
-            type : (this.getType()?this.getType().toString():null),
+            type : (this.getType()?detailsInterfaces.DetailsItemType[this.getType()]:null),
 
             error : this.getError(),
 
@@ -230,7 +230,7 @@ export class Category extends Item{
 
             description : this.getDescription(),
 
-            type : (this.getType()?this.getType().toString():null),
+            type : (this.getType()?detailsInterfaces.DetailsItemType[this.getType()]:null),
 
             error : this.getError(),
 
@@ -365,7 +365,7 @@ export class TreeField extends Item {
 
             description : this.getDescription(),
 
-            type : (this.getType()?this.getType().toString():null),
+            type : (this.getType()?detailsInterfaces.DetailsItemType[this.getType()]:null),
 
             error : this.getError(),
 
@@ -394,6 +394,40 @@ export class XMLSchemaField extends PropertyItem{
 
     needsSeparateLabel(){
         return true;
+    }
+}
+
+export class SelectBox extends PropertyItem{
+
+    getType() : detailsInterfaces.DetailsItemType {
+        return detailsInterfaces.DetailsItemType.SELECTBOX;
+    }
+
+    calculateOptions() : string[] {
+        var options= valueOptions(this.property, this.node);
+
+
+        var a=this.node.attr(this.property.nameId());
+        if (a){
+            if (!_.find(options,x=>x==a.value())){
+                options.push(a.value());
+            }
+        }
+        if (!this.property.isRequired()&&!this.property.getAdapter(def.RAMLPropertyService).isKey()){
+            options=[""].concat(options);
+        }
+
+        return options;
+    }
+
+    toJSON() : detailsInterfaces.DetailsItemWithOptionsJSON {
+        var superResults = super.toJSON();
+
+        var results = <detailsInterfaces.DetailsItemWithOptionsJSON> superResults;
+
+        results.options = this.calculateOptions();
+
+        return results;
     }
 }
 
@@ -433,40 +467,6 @@ export var valueOptions = function (x:hl.IProperty, node:hl.IHighLevelNode):stri
     }
     return _.unique(vls);
 };
-
-export class SelectBox extends PropertyItem{
-
-    getType() : detailsInterfaces.DetailsItemType {
-        return detailsInterfaces.DetailsItemType.SELECTBOX;
-    }
-
-    calculateOptions() : string[] {
-        var options= valueOptions(this.property, this.node);
-
-
-        var a=this.node.attr(this.property.nameId());
-        if (a){
-            if (!_.find(options,x=>x==a.value())){
-                options.push(a.value());
-            }
-        }
-        if (!this.property.isRequired()&&!this.property.getAdapter(def.RAMLPropertyService).isKey()){
-            options=[""].concat(options);
-        }
-
-        return options;
-    }
-
-    toJSON() : detailsInterfaces.DetailsItemJSONWithOptions {
-        var superResults = super.toJSON();
-
-        var results = <detailsInterfaces.DetailsItemJSONWithOptions> superResults;
-
-        results.options = this.calculateOptions();
-
-        return results;
-    }
-}
 
 function escapeValue(v:string){
     if (v.length>0) {

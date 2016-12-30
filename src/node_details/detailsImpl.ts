@@ -9,7 +9,17 @@ import lowLevel=rp.ll;
 import _=require("underscore")
 import universe = rp.universes;
 import universehelpers =rp.universeHelpers;
+import commonInterfaces = require("../common/commonInterfaces")
+import tools = require("../common/tools")
 
+// var _astProvider : commonInterfaces.IASTProvider = null;
+//
+// /**
+//  * Sets AST provider. Must be called to use the module.
+//  */
+// export function setASTProvider(astProvider : commonInterfaces.IASTProvider) {
+//     _astProvider = astProvider
+// }
 
 function category(p:hl.IProperty,node:hl.IHighLevelNode):string{
     if (p.getAdapter(def.RAMLPropertyService).isKey()||p.isRequired()){
@@ -63,7 +73,35 @@ function addExampleControl(property: hl.IProperty, node : hl.IHighLevelNode,
     }
 }
 
-export function buildItem(node:hl.IHighLevelNode,dialog:boolean){
+
+/**
+ * Gets details for a position.
+ * Requires AST provider to be set up via setASTProvider method call.
+ *
+ * In case of the optional position parameter missing, AST provider's getSelectedNode method
+ * will be called to determine the node to return detaisl for.
+ * @param position - position index in text counting from 0.
+ */
+export function buildItemByPosition(position?:number) {
+    return buildItem(findNode(position));
+}
+
+function findNode(position?:number) : hl.IParseResult {
+    return tools.getCurrentNode(position)
+}
+
+/**
+ * Creates an item by node.
+ * @param node
+ * @returns {TopLevelNode}
+ */
+export function buildItem(parseResults:hl.IParseResult) : detailsInterfaces.DetailsItem {
+    if (!parseResults) return null;
+
+    if (!parseResults.asElement()) return null;
+
+    var node = <hl.IHighLevelNode> parseResults;
+
     rp.utils.updateType(node);
     var props=node.propertiesAllowedToUse();
 

@@ -2,6 +2,7 @@
 import fs = require("fs")
 import path = require("path")
 import parser = require("raml-1-parser")
+import hl = parser.hl;
 import assert = require("assert")
 import index = require("../../index")
 import outlineInitializer = require("./outline-initializer")
@@ -503,9 +504,9 @@ function suiteTitle(absPath:string,dataRoot:string){
     return title;
 }
 
-function dumpSuite(title:string,dataRoot:string,tests:Test[]):string{
+function dumpSuite(title:string,dataRoot:string,tests:Test[],testMethodName:string):string{
 
-    var dumpedTests = tests.map(x=>dumpTest(x,dataRoot));
+    var dumpedTests = tests.map(x=>dumpTest(x,dataRoot,testMethodName));
 
     var testsStr = dumpedTests.join("\n\n");
     return`describe('${title}',function(){
@@ -515,7 +516,7 @@ ${testsStr}
 });`
 }
 
-function dumpTest(test:Test,dataRoot:string):string{
+function dumpTest(test:Test,dataRoot:string,testMethod:string):string{
 
     var relMasterPath = path.relative(dataRoot,test.masterPath()).replace(/\\/g,'/');;
 
@@ -535,7 +536,7 @@ function dumpTest(test:Test,dataRoot:string):string{
         args.push(`"${jsonPath}"`);
     }
 
-    var testMethod = 'testOutline';
+    // var testMethod = 'testOutline';
 
     return`    it("${path.basename(path.dirname(test.masterPath()))}/${path.basename(test.masterPath())}", function () {
         this.timeout(15000);
@@ -579,7 +580,8 @@ export function generateSuite(
     folderAbsPath:string,
     dstPath:string,
     dataRoot:string,
-    mochaSuiteTitle:string){
+    mochaSuiteTitle:string,
+    testMethodName:string){
 
     var dirs = iterateFolder(folderAbsPath);
     var map:{[key:string]:Test[]} = {};
@@ -605,9 +607,122 @@ export function generateSuite(
         if(title==null){
             continue;
         }
-        var suiteStr = dumpSuite(title,dataRoot,map[suitePath]);
+        var suiteStr = dumpSuite(title,dataRoot,map[suitePath],testMethodName);
         suiteStrings.push(suiteStr);
     }
     var content = fileContent(suiteStrings,dstPath,mochaSuiteTitle);
     fs.writeFileSync(dstPath,content);
+}
+
+interface DetailsData {
+    parsedRAML : hl.BasicNode,
+    cursorPosition : number
+}
+
+function getDetailsData(apiPath:string, extensions?:string[]) : DetailsData {
+    var contents : string = fs.readFileSync(apiPath, "utf8")
+
+    var markerPosition = contents.indexOf("*");
+    if (markerPosition == -1) return null;
+
+    var contentsStart = contents.substring(0, markerPosition);
+    var contentsEnd = markerPosition<contents.length-1?contents.substring(markerPosition+1):"";
+
+    var resultContents = contentsStart+contentsEnd;
+
+    var root = parser.parseRAMLSync(resultContents);
+
+    return {
+        parsedRAML: root,
+        cursorPosition: markerPosition
+    }
+}
+
+function getDetailsJSON(api : parser.hl.BasicNode, position : number) : any {
+
+    var highLevelNode = api.highLevel();
+
+    var astProvider = {
+        getASTRoot() : hl.IHighLevelNode {
+            return highLevelNode;
+        },
+
+        getSelectedNode() : hl.IParseResult {
+            return highLevelNode.findElementAtOffset(position);
+        }
+    }
+
+    outlineInitializer.initialize2(astProvider);
+
+    return index.getDetailsJSON(position);
+}
+
+export function testDetails (
+    apiPath:string, extensions?:string[],
+    detailsJsonPath?:string,
+    regenerateJSON:boolean=false,
+    callTests:boolean=true):void{
+
+    if(apiPath){
+        apiPath = data(apiPath);
+    }
+    if(extensions){
+        extensions = extensions.map(x=>data(x));
+    }
+    if(!detailsJsonPath){
+        detailsJsonPath = defaultJSONPath(apiPath);
+    }
+    else{
+        detailsJsonPath = data(detailsJsonPath);
+    }
+
+    var detailsData = getDetailsData(apiPath, extensions);
+
+    var api = detailsData.parsedRAML;
+    var expanded = api;
+
+    (<any>expanded).setAttributeDefaults(true);
+    var json = getDetailsJSON(expanded, detailsData.cursorPosition);
+
+    if(!detailsJsonPath){
+        detailsJsonPath = defaultJSONPath(apiPath);
+    }
+
+    if(regenerateJSON) {
+        serializeTestJSON(detailsJsonPath, json);
+    }
+    if(!fs.existsSync(detailsJsonPath)){
+        serializeTestJSON(detailsJsonPath, json);
+        if(!callTests){
+            console.log("OUTLINE JSON GENERATED: " + detailsJsonPath);
+            return;
+        }
+        console.warn("FAILED TO FIND OUTLINE JSON: " + detailsJsonPath);
+    }
+    if(!callTests){
+        return;
+    }
+
+
+    var outlineJson:any = readTestJSON(detailsJsonPath);
+    var pathRegExp = new RegExp('/errors\\[\\d+\\]/path');
+    var messageRegExp = new RegExp('/errors\\[\\d+\\]/message');
+    var diff = compare(json,outlineJson).filter(x=>{
+        if(x.path.match(pathRegExp)){
+            return false;
+        }
+
+        return true;
+    });
+
+    var diffArr = [];
+    if(diff.length==0){
+        assert(true);
+    }
+    else{
+        console.warn("DIFFERENCE DETECTED FOR " + detailsJsonPath);
+        console.warn(diff.map(x=>x.message("actual","expected")).join("\n\n"));
+
+        assert(false);
+    }
 }
