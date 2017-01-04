@@ -431,6 +431,16 @@ describe('raml-1.0',function(){
         this.timeout(15000);
         testSuiteUtil.testDetails("details/raml-1.0/test059/api.raml", null, "details/raml-1.0/test059/apigateway-outline.json");
     });
+
+    it("test60/extension.raml", function () {
+        this.timeout(15000);
+        testSuiteUtil.testDetails("details/raml-1.0/test60/extension.raml", null, "details/raml-1.0/test60/api-outline.json");
+    });
+
+    it("test61/extension.raml", function () {
+        this.timeout(15000);
+        testSuiteUtil.testDetails("details/raml-1.0/test61/extension.raml", null, "details/raml-1.0/test61/api-outline.json");
+    });
     
 });
 

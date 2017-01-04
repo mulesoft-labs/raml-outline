@@ -616,29 +616,108 @@ export function generateSuite(
 
 interface DetailsData {
     parsedRAML : hl.BasicNode,
-    cursorPosition : number
+    selectedNode : hl.IParseResult
+}
+
+function findNode(n : hl.IParseResult, position: number, unitPath: string) {
+    if (n==null){
+        return null;
+    }
+
+    var lowLevel = n.lowLevel();
+    if (lowLevel) {
+        if ((lowLevel.start() <= position && lowLevel.end() >= position)
+            || lowLevel.unit().absolutePath() != unitPath) {
+            var result:hl.IHighLevelNode = lowLevel.unit().absolutePath()==unitPath?<hl.IHighLevelNode>n:null;
+            (<hl.IHighLevelNode>n).elements().forEach(x=> {
+
+                var child = findNode(x, position, unitPath);
+                if (child) {
+                    result = child;
+                }
+            })
+            return result;
+        }
+    }
+    return null;
 }
 
 function getDetailsData(apiPath:string, extensions?:string[]) : DetailsData {
+
     var contents : string = fs.readFileSync(apiPath, "utf8")
 
-    var markerPosition = contents.indexOf("*");
-    if (markerPosition == -1) return null;
 
-    var contentsStart = contents.substring(0, markerPosition);
-    var contentsEnd = markerPosition<contents.length-1?contents.substring(markerPosition+1):"";
+    var folder = path.dirname(apiPath);
+    var ramlFiles : DirectoryContent[] = iterateFolder(folder);
 
-    var resultContents = contentsStart+contentsEnd;
+    var foundUnitPath = null;
+    var foundPosition = null;
 
-    var root = parser.parseRAMLSync(resultContents);
+    for (var ramlFile of ramlFiles[0].allRamlFiles()) {
+        var unitPath = ramlFile.absolutePath();
+        var contents : string = fs.readFileSync(unitPath, "utf8")
+        var markerPosition = contents.indexOf("*")
+        if (markerPosition != -1) {
+            foundUnitPath = unitPath;
+            foundPosition = markerPosition;
+            break;
+        }
+    }
+
+    if (!foundUnitPath) return null;
+
+    var fsResolver = {
+
+        content : function(path) {
+            if (!fs.existsSync(path)){
+                return null;
+            }
+            try {
+                var originalContent = fs.readFileSync(path).toString();
+                var markerPosition = originalContent.indexOf("*");
+                if (markerPosition == -1) return originalContent;
+
+                var contentsStart = originalContent.substring(0, markerPosition);
+                var contentsEnd = markerPosition<originalContent.length-1?originalContent.substring(markerPosition+1):"";
+
+                var resultContents = contentsStart+contentsEnd;
+                return resultContents;
+            } catch (e){
+                return null;
+            }
+        },
+
+        contentAsync : function(path){
+
+            return new Promise(function(resolve, reject) {
+
+                fs.readFile(path,function(err,data){
+                    if(err!=null){
+                        return reject(err.toString());
+                    }
+                    var content = data.toString();
+                    resolve(content);
+                });
+            });
+        }
+    }
+
+    if (!extensions) extensions = []
+    var root = parser.loadRAMLSync(apiPath, extensions, {
+        fsResolver: fsResolver
+    });
+
+    if (!root) return null;
+
+    var selectedNode = findNode(root.highLevel(), foundPosition, foundUnitPath);
 
     return {
-        parsedRAML: root,
-        cursorPosition: markerPosition
+        parsedRAML : root,
+        selectedNode : selectedNode
     }
 }
 
-function getDetailsJSON(api : parser.hl.BasicNode, position : number) : any {
+function getDetailsJSON(api : parser.hl.BasicNode, selectedNode: hl.IParseResult) : any {
 
     var highLevelNode = api.highLevel();
 
@@ -648,14 +727,14 @@ function getDetailsJSON(api : parser.hl.BasicNode, position : number) : any {
         },
 
         getSelectedNode() : hl.IParseResult {
-            return highLevelNode.findElementAtOffset(position);
+            return selectedNode;
         }
     }
 
     outlineInitializer.initialize2(astProvider);
 
     outlineInitializer.initialize2(astProvider);
-    var json: any = index.getDetailsJSON(position);
+    var json: any = index.getDetailsJSON();
     json["nodeId"] = astProvider.getSelectedNode().id();
     return json;
 }
@@ -685,7 +764,7 @@ export function testDetails (
     var expanded = api;
 
     (<any>expanded).setAttributeDefaults(true);
-    var json = getDetailsJSON(expanded, detailsData.cursorPosition);
+    var json = getDetailsJSON(expanded, detailsData.selectedNode);
 
     if(!detailsJsonPath){
         detailsJsonPath = defaultJSONPath(apiPath);
