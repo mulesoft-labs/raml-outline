@@ -20,18 +20,7 @@
                 "typeText": ":array",
                 "icon": "FILE_BINARY",
                 "textStyle": "SUCCESS",
-                "children": [
-                  {
-                    "text": "items",
-                    "typeText": ":string",
-                    "icon": "FILE_BINARY",
-                    "textStyle": "SUCCESS",
-                    "children": [],
-                    "key": "items :: userIds :: /{userIds} :: /users :: ",
-                    "start": 218,
-                    "end": 223
-                  }
-                ],
+                "children": [],
                 "key": "userIds :: /{userIds} :: /users :: ",
                 "start": 142,
                 "end": 149
