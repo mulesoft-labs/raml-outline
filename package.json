@@ -1,6 +1,6 @@
 {
   "name": "raml-outline",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "main": "dist/index.js",
   "scripts": {
     "build": "rimraf dist && tsc && npm run generateStructureSuite",
