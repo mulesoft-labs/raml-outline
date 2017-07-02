@@ -69,6 +69,21 @@
       "valueText": "boolean"
     },
     {
+      "title": "Facets",
+      "description": "",
+      "type": "CATEGORY",
+      "children": [
+        {
+          "title": "enum",
+          "description": "",
+          "type": "CHECKBOX",
+          "children": [],
+          "valueText": "false"
+        }
+      ],
+      "valueText": null
+    },
+    {
       "title": "Type",
       "description": "",
       "type": "CATEGORY",

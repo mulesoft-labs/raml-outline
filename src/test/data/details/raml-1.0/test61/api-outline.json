@@ -59,6 +59,13 @@
           "valueText": null
         },
         {
+          "title": "enum",
+          "description": "",
+          "type": "MULTIEDITOR",
+          "children": [],
+          "valueText": ""
+        },
+        {
           "title": "maxProperties",
           "description": "The maximum number of properties allowed for instances of this type.",
           "type": "ATTRIBUTETEXT",
