@@ -735,7 +735,7 @@ function getDetailsJSON(api : parser.hl.BasicNode, selectedNode: hl.IParseResult
 
     outlineInitializer.initialize2(astProvider);
     var json: any = index.getDetailsJSON();
-    json["nodeId"] = astProvider.getSelectedNode().id();
+    //json["nodeId"] = astProvider.getSelectedNode().id();
     return json;
 }
 
