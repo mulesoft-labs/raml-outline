@@ -1,6 +1,6 @@
 {
   "name": "raml-outline",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "main": "dist/index.js",
   "scripts": {
     "build": "rimraf dist && tsc && npm run generateStructureSuite",
@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "underscore": "^1.8.3",
-    "raml-1-parser": "1.1.26"
+    "raml-1-parser": "1.1.30"
   },
   "typings":"dist/index.d.ts",
   "repository": {
