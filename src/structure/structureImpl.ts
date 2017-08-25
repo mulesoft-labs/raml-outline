@@ -6,21 +6,22 @@ import search=parser.search;
 import hl=parser.hl;
 import ll=parser.ll;
 import _ = require("underscore");
+import commonInterfaces = require("../common/commonInterfaces")
+import tools = require("../common/tools")
 
-var _labelProviders : structure.LabelProvider[]  = [];
-var _decorators : structure.Decorator[]  = [];
-var _categoryFilters : {[categoryName:string]:structure.CategoryFilter} = {};
-var _visibilityFilter : structure.VisibilityFilter = null;
+var _labelProviders : commonInterfaces.LabelProvider[]  = [];
+var _decorators : commonInterfaces.Decorator[]  = [];
+var _categoryFilters : {[categoryName:string]:commonInterfaces.CategoryFilter} = {};
+var _visibilityFilter : commonInterfaces.VisibilityFilter = null;
 var _contentProvider : structure.ContentProvider = null;
-var _astProvider : structure.IASTProvider = null;
-var _keyProvider : structure.KeyProvider = null;
+var _keyProvider : commonInterfaces.KeyProvider = null;
 
 /**
  * Adds label provider. The system can contain several lable providers at once,
  * the first one returning a label will be used.
  * @param provider
  */
-export function addLabelProvider(provider : structure.LabelProvider) {
+export function addLabelProvider(provider : commonInterfaces.LabelProvider) {
     _labelProviders.push(provider)
 }
 
@@ -29,7 +30,7 @@ export function addLabelProvider(provider : structure.LabelProvider) {
  * data will be used.
  * @param decorator
  */
-export function addDecorator(decorator : structure.Decorator) {
+export function addDecorator(decorator : commonInterfaces.Decorator) {
     _decorators.push(decorator)
 }
 
@@ -40,7 +41,7 @@ export function addDecorator(decorator : structure.Decorator) {
  * @param categoryFilter
  */
 export function addCategoryFilter(categoryName: string,
-                                  categoryFilter : structure.CategoryFilter) {
+                                  categoryFilter : commonInterfaces.CategoryFilter) {
     _categoryFilters[categoryName] = categoryFilter;
 }
 
@@ -49,7 +50,7 @@ export function addCategoryFilter(categoryName: string,
  * going into the structure tree of any category.
  * @param visibilityFilter
  */
-export function setVisibilityFilter(visibilityFilter : structure.VisibilityFilter) {
+export function setVisibilityFilter(visibilityFilter : commonInterfaces.VisibilityFilter) {
     _visibilityFilter = visibilityFilter
 }
 
@@ -65,15 +66,8 @@ export function setContentProvider(contentProvider : structure.ContentProvider) 
  * Sets key provider. It is recommended to use the default one.
  * @param keyProvider
  */
-export function setKeyProvider(keyProvider : structure.KeyProvider) {
+export function setKeyProvider(keyProvider : commonInterfaces.KeyProvider) {
     _keyProvider = keyProvider;
-}
-
-/**
- * Sets AST provider. Must be called to use the module.
- */
-export function setASTProvider(astProvider : structure.IASTProvider) {
-    _astProvider = astProvider
 }
 
 class StructureNodeImpl implements structure.StructureNode {
@@ -173,7 +167,7 @@ function isStructureNodeImpl(node : structure.StructureNode) : node is Structure
     return (<any>node).getSource != null;
 }
 
-function getLabelProvider(node: structure.StructureNode) : structure.LabelProvider {
+function getLabelProvider(node: structure.StructureNode) : commonInterfaces.LabelProvider {
     if (!_labelProviders) return null;
 
     var source = node.getSource();
@@ -182,7 +176,7 @@ function getLabelProvider(node: structure.StructureNode) : structure.LabelProvid
     return _.find(_labelProviders, labelProvider=>labelProvider.getLabelText(source)!=null);
 }
 
-function getDecorator(node: structure.StructureNode) : structure.Decorator {
+function getDecorator(node: structure.StructureNode) : commonInterfaces.Decorator {
     if (!_decorators) return null;
 
     var source = node.getSource();
@@ -339,12 +333,11 @@ function defaultContentProvider(node : structure.StructureNode) :
  * @param categoryName
  */
 export function getStructure(categoryName? : string) : structure.StructureNode {
-    if (!_astProvider) return null;
 
-    var hlRoot = _astProvider.getASTRoot();
+    var hlRoot = tools.getRootNode();
     if (!hlRoot) return null;
 
-    var _selected = _astProvider.getSelectedNode();
+    var _selected = tools.getCurrentNode();
 
     var structureRoot = hlNodeToStructureNode(hlRoot, _selected);
     if (!structureRoot) return null;
@@ -360,12 +353,10 @@ export function getStructure(categoryName? : string) : structure.StructureNode {
 }
 
 export function getStructureForAllCategories() : {[categoryName:string] : structure.StructureNode} {
-    if (!_astProvider) return null;
-
-    var hlRoot = _astProvider.getASTRoot();
+    var hlRoot = tools.getRootNode();
     if (!hlRoot) return null;
 
-    var _selected = _astProvider.getSelectedNode();
+    var _selected = tools.getCurrentNode();
 
     var structureRoot = hlNodeToStructureNode(hlRoot, _selected);
     if (!structureRoot) return null;

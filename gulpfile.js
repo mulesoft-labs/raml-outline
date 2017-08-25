@@ -8,7 +8,8 @@ var istanbul = require('gulp-istanbul');
 
 
 var testFiles = [
-    'dist/test/structure_suite.js'
+    'dist/test/structure_suite.js',
+    'dist/test/details_suite.js'
 ]
 
 gulp.task('pre-test', function () {

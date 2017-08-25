@@ -10,6 +10,7 @@ import _ = require("underscore");
 import universes = parser.universes;
 import universeHelpers = parser.universeHelpers;
 import defaultInterfaces = require("./structureDefaultInterfaces")
+import commonInterfaces = require("../common/commonInterfaces")
 
 /**
  * Default label provider.
@@ -78,7 +79,7 @@ class DefaultLabelProvider {
 
 
 
-export class DefaultDecorator implements structure.Decorator {
+export class DefaultDecorator implements commonInterfaces.Decorator {
     private decorations : {[nodeType: number] : defaultInterfaces.Decoration} = {}
 
     addDecoration(nodeType : defaultInterfaces.NodeType, decoration : defaultInterfaces.Decoration) : void {
