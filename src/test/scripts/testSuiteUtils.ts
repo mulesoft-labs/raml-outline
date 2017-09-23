@@ -805,6 +805,12 @@ export function testDetails (
         console.warn("DIFFERENCE DETECTED FOR " + detailsJsonPath);
         console.warn(diff.map(x=>x.message("actual","expected")).join("\n\n"));
 
+        console.log("ORIGINAL:")
+        console.log(JSON.stringify(outlineJson, null, 2))
+
+        console.log("TEST RESULT:")
+        console.log(JSON.stringify(json, null, 2))
+
         assert(false);
     }
 }
