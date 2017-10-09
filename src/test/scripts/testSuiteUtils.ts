@@ -1,4 +1,3 @@
-/// <reference path="../../../typings/main.d.ts" />
 import fs = require("fs")
 import path = require("path")
 import parser = require("raml-1-parser")
@@ -6,6 +5,7 @@ import hl = parser.hl;
 import assert = require("assert")
 import index = require("../../index")
 import outlineInitializer = require("./outline-initializer")
+import _ =require("underscore");
 
 export function data(filepath: string): string {
     var datadir =  path.resolve(projectFolder(), 'src/test/data');
@@ -564,7 +564,6 @@ function fileContent(suiteStrings:string[],filePath:string,title:string) {
     return `/**
  * The file is generated. Manual changes will be overridden by the next build.
  */
-/// <reference path="${relTypingsPath}" />
 import testSuiteUtil = require("${relSuiteUtilPath}")
 
 describe('${title}',function(){
