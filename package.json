@@ -9,7 +9,7 @@
     "testall" : "dev-env-installer testall",
     "devInstall": "dev-env-installer install",
     "test" : "gulp test",
-    "generateStructureSuite": "node dist/test/scripts/generateTestSuite.js && tsc src/test/structure_suite.ts --outDir dist -m commonjs --sourceMap"
+    "generateStructureSuite": "node dist/test/scripts/generateTestSuite.js && rimraf dist && tsc"
   },
   "dependencies": {
     "underscore": "^1.8.3",

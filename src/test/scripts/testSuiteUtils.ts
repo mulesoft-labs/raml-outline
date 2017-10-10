@@ -667,7 +667,7 @@ function getDetailsData(apiPath:string, extensions?:string[]) : DetailsData {
 
     var fsResolver = {
 
-        content : function(path) {
+        content : function(path: string): string {
             if (!fs.existsSync(path)){
                 return null;
             }
@@ -686,7 +686,7 @@ function getDetailsData(apiPath:string, extensions?:string[]) : DetailsData {
             }
         },
 
-        contentAsync : function(path){
+        contentAsync : function(path: string): Promise<string> {
 
             return new Promise(function(resolve, reject) {
 
