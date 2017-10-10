@@ -9,11 +9,11 @@
     "testall" : "dev-env-installer testall",
     "devInstall": "dev-env-installer install",
     "test" : "gulp test",
-    "generateStructureSuite": "node dist/test/scripts/generateTestSuite.js && tsc src/test/structure_suite.ts --outDir dist -m commonjs --sourceMap"
+    "generateStructureSuite": "node dist/test/scripts/generateTestSuite.js && rimraf dist && tsc"
   },
   "dependencies": {
     "underscore": "^1.8.3",
-    "raml-1-parser": "1.1.30"
+    "raml-1-parser": "1.1.32"
   },
   "typings":"dist/index.d.ts",
   "repository": {
@@ -26,6 +26,10 @@
     "url": "https://github.com/mulesoft/raml-structure/issues"
   },
   "devDependencies": {
+    "@types/node": "4.2.20",
+    "@types/chai": "^4.0.1",
+    "@types/mocha": "^2.2.41",
+    "@types/underscore": "^1.8.3",
     "gulp": "^3.8.11",
     "gulp-compass": "^2.0.4",
     "gulp-connect": "^2.2.0",
@@ -33,9 +37,8 @@
     "gulp-rename": "^1.2.2",
     "gulp-sourcemaps": "^1.5.2",
     "gulp-typescript": "^2.11.0",
-    "typescript": "1.8.7",
-    "typings": "^0.5.1",
-    "dev-env-installer":"0.0.5",
+    "typescript": "2.5.2",
+    "dev-env-installer": "0.0.14",
     "rimraf":"*",
     "mocha": "^2.2.1",
     "chai": "^2.2.0",
