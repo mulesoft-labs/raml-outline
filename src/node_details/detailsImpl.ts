@@ -271,3 +271,51 @@ export function buildItem(parseResults:hl.IParseResult) : detailsInterfaces.Deta
     }
     return result;
 }
+
+/**
+ * Finds item by its ID.
+ *
+ * @param root - details root.
+ * @param id - id of the item to find.
+ */
+export function getItemById(root: detailsInterfaces.DetailsItem,
+                            id: string) : detailsInterfaces.DetailsItem {
+    if (root.getId() == id) {
+        return root;
+    }
+
+    if (root.getChildren() == null || root.getChildren().length == 0) {
+        return null;
+    }
+
+    for (const child of root.getChildren()) {
+
+        const childResult = getItemById(child, id);
+
+        if (childResult != null) {
+            return childResult;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Changes the value of details item.
+ * @param position - cursor position
+ * @param itemID - details item ID
+ * @param value - new value
+ */
+export function changeDetailValue(position: number,
+                                  itemID: string,
+                                  value: string | number | boolean): commonInterfaces.IChangedDocument {
+
+    const root = buildItemByPosition(position) as itemsImpl.Item;
+
+    const item = getItemById(root, itemID) as itemsImpl.Item;
+    if (!item) {
+        return null;
+    }
+
+    return item.setValue(value);
+}

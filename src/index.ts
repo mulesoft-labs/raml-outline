@@ -277,3 +277,16 @@ export function getDetailsJSON(position?: number) : detailsInterface.DetailsItem
 export function setEditorProvider(editorProvider : commonInterfaces.IEditorProvider) {
     tools.setEditorProvider(editorProvider)
 }
+
+/**
+ * Changes the value of details item.
+ * @param position - cursor position
+ * @param itemID - details item ID
+ * @param value - new value
+ */
+export function changeDetailValue(position: number,
+                                  itemID: string,
+                                  value: string | number | boolean): commonInterfaces.IChangedDocument {
+
+    return detailsImplementation.changeDetailValue(position, itemID, value);
+}

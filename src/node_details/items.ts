@@ -8,6 +8,7 @@ import lowLevel=rp.ll;
 import _=require("underscore")
 import universe = rp.universes;
 import universehelpers =rp.universeHelpers;
+import commonInterfaces = require("../common/commonInterfaces")
 
 export function getDefaultValue(node: hl.IHighLevelNode, property: hl.IProperty) {
     if(property.nameId() === <string>universe.Universe10.TypeDeclaration.properties.required.name) {
@@ -36,6 +37,12 @@ export abstract class Item implements detailsInterfaces.DetailsItem {
         this.title = title;
         this.description = description;
     }
+
+    /**
+     * Sets node value.
+     * @param value
+     */
+    abstract setValue(value: string | number | boolean) : commonInterfaces.IChangedDocument ;
 
     needsSeparateLabel(){
         return false;
@@ -117,6 +124,11 @@ export abstract class Item implements detailsInterfaces.DetailsItem {
      * Converts this node and its subnodes to JSON, recursivelly.
      */
     abstract toJSON() : detailsInterfaces.DetailsItemJSON;
+
+    /**
+     * Returns item ID.
+     */
+    abstract getId() : string;
 }
 
 /**
@@ -134,6 +146,102 @@ export abstract class PropertyItem extends Item {
 
     hasDefault() {
         return hasDefault(this.property);
+    }
+
+    setValue(value: string | number | boolean) : commonInterfaces.IChangedDocument {
+
+        var newNode = false;
+
+        let vl;
+
+        if (value==null){
+            vl = "";
+        } else if (value===true){
+            vl = "true"
+        } else if (value===false){
+            vl = "";
+        } else {
+            vl = value.toString();
+        }
+
+        var attr=this.node.attr(this.property.nameId());
+
+        var av=attr.value()!=null ? attr.value().toString() : "";
+
+        if (av==vl){
+            return;
+        }
+
+        if (vl.length>0) {
+            // if (attr&&attr.lowLevel().includePath()){
+            //     var path=attr.lowLevel().includePath();
+            //     var actualUnit=attr.lowLevel().unit().resolve(path);
+            //     if (actualUnit){
+            //         var apath=actualUnit.absolutePath();
+            //         fs.writeFileSync(apath,vl);
+            //     }
+            //     return;
+            // }
+
+            if(this.node.lowLevel().includePath() && !this.node.lowLevel().unit().resolve(this.node.lowLevel().includePath())) {
+                return;
+            }
+
+            attr = this.node.attrOrCreate(this.property.nameId());
+
+            attr.setValue("" + vl);
+
+            var attrLowLevel = attr.lowLevel();
+
+            if(attrLowLevel.kind() == 1) {
+                var asMapping =  (<any>attrLowLevel).asMapping && (<any>attrLowLevel).asMapping();
+
+                var mappingValue = asMapping && asMapping.value;
+
+                if(mappingValue && mappingValue.kind == 0) {
+                    mappingValue.rawValue = "" + vl;
+                }
+
+                if(this.node.parent() && this.node.lowLevel().parent() && this.node.property()) {
+                    var rootNode = this.node.root();
+                    var propId = this.node.property().nameId();
+
+                    var parent = (<any>this).node.parent();
+
+                    parent.resetRuntimeTypes();
+                    parent.resetAuxilaryState();
+                    parent.resetChildren();
+
+                    (<any>rootNode).setTypes(null);
+                    rootNode.lowLevel().actual().types = null;
+                    rootNode.children();
+
+                    parent.children();
+
+                    newNode = true;
+
+                    this.node = parent.element(propId) || parent.attr(propId);
+
+                    attr = this.node.attrOrCreate(this.property.nameId());
+                }
+            }
+
+            delete this.node['_ptype'];
+        }
+        else{
+            if (attr){
+                if (!this.property.getAdapter(def.RAMLPropertyService).isKey()) {
+                    attr.remove();
+                }
+            }
+        }
+
+        if (attr.lowLevel() && attr.lowLevel().unit() && attr.lowLevel().unit() != this.node.lowLevel().unit()) {
+            return {
+                uri: attr.lowLevel().unit().path(),
+                text: attr.lowLevel().unit().contents()
+            }
+        }
     }
 
     getValue() : string {
@@ -165,8 +273,17 @@ export abstract class PropertyItem extends Item {
 
             children : [],
 
-            valueText : this.getValue()
+            valueText : this.getValue(),
+
+            id : this.getId()
         };
+    }
+
+    /**
+     * Returns item ID.
+     */
+    getId() : string {
+        return this.node.id() + "#" + this.property.nameId();
     }
 
     /**
@@ -236,8 +353,21 @@ export class Category extends Item{
 
             children : _.map(this.getChildren(), child=>child.toJSON()),
 
-            valueText : null
+            valueText : null,
+
+            id: this.getId()
         };
+    }
+
+    /**
+     * Returns item ID.
+     */
+    getId() : string {
+        return "Category#"+this.getTitle();
+    }
+
+    setValue(value: string | number | boolean) : commonInterfaces.IChangedDocument  {
+        return null;
     }
 }
 
@@ -384,6 +514,14 @@ export class TreeField extends Item {
     getChildren() : detailsInterfaces.DetailsItem[] {
         return _.map(this.node.children(), child=>new TreeField(child))
     }
+
+    getId() : string {
+        return "";
+    }
+
+    setValue(value: string | number | boolean) : commonInterfaces.IChangedDocument  {
+        return null;
+    }
 }
 
 export class XMLSchemaField extends PropertyItem{
@@ -499,6 +637,34 @@ export class SimpleMultiEditor extends PropertyItem{
 
         return attrs.map(x=>escapeValue(""+x.value())).join(", ");
     }
+
+    setValue(value: string | number | boolean) : commonInterfaces.IChangedDocument {
+
+        let vl=value==null ? "" : value;
+
+
+        var attrs=this.node.attributes(this.property.nameId());
+        var av=attrs.map(x=>escapeValue(""+x.value())).join(", ");
+        if (av==vl){
+            return;
+        }
+        var ww=vl.toString().split(",");
+        let result=ww.filter(x=>x.trim().length>0).map(x=>x.trim());
+
+        if(this.node.lowLevel().includePath() && !this.node.lowLevel().unit().resolve(this.node.lowLevel().includePath())) {
+            return;
+        }
+
+        var attribute = this.node.attrOrCreate(this.property.nameId());
+        attribute.setValues(result)
+
+        const unit = this.node.lowLevel().unit();
+
+        return {
+            uri: unit.path(),
+            text: unit.contents()
+        }
+    }
 }
 
 export class CheckBoxField extends PropertyItem{
@@ -585,6 +751,10 @@ export class ExampleField extends PropertyItem {
     getType() : detailsInterfaces.DetailsItemType {
         return detailsInterfaces.DetailsItemType.JSONEXAMPLE;
     }
+
+    setValue(value: string | number | boolean) : commonInterfaces.IChangedDocument {
+        return null;
+    }
 }
 export class XMLExampleField extends PropertyItem{
 
@@ -597,6 +767,10 @@ export class XMLExampleField extends PropertyItem{
 
     getType() : detailsInterfaces.DetailsItemType {
         return detailsInterfaces.DetailsItemType.XMLEXAMPLE;
+    }
+
+    setValue(value: string | number | boolean) : commonInterfaces.IChangedDocument {
+        return null;
     }
 }
 

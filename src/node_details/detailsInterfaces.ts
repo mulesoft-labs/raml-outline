@@ -27,6 +27,11 @@ export interface DetailsItemJSON {
      * Node children.
      */
     children : DetailsItemJSON[]
+
+    /**
+     * Node ID.
+     */
+    id : string
 }
 
 /**
@@ -116,4 +121,9 @@ export interface DetailsItem {
      * Converts this node and its subnodes to JSON, recursivelly.
      */
     toJSON() : DetailsItemJSON;
+
+    /**
+     * Returns item ID.
+     */
+    getId() : string;
 }

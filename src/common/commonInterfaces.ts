@@ -196,3 +196,39 @@ export interface IEditorProvider {
      */
     getCurrentEditor() : IAbstractTextEditor
 }
+
+export interface ITextEdit {
+    /**
+     * Range to replace. Range start==end==0 => insert into the beginning of the document,
+     * start==end==document end => insert into the end of the document
+     */
+    range: IRange;
+
+    /**
+     * Text to replace given range with.
+     */
+    text: string;
+}
+
+export interface IChangedDocument {
+    /**
+     * Document URI
+     */
+    uri: string;
+
+    /**
+     * Optional document version.
+     */
+    version?: number;
+
+    /**
+     * Document content
+     */
+    text?: string;
+
+    /**
+     * Optional set of text edits instead of complete text replacement.
+     * Is only taken into account if text is null.
+     */
+    textEdits?: ITextEdit[];
+}
