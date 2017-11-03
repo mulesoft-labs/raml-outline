@@ -6,6 +6,7 @@ import detailsInterface = require("./node_details/detailsInterfaces")
 import detailsImplementation = require("./node_details/detailsImpl")
 import commonInterfaces = require("./common/commonInterfaces")
 import tools = require("./common/tools")
+import loggerModule = require("./common/logger")
 
 /**
  * Structure node JSON representation.
@@ -289,4 +290,12 @@ export function changeDetailValue(position: number,
                                   value: string | number | boolean): commonInterfaces.IChangedDocument {
 
     return detailsImplementation.changeDetailValue(position, itemID, value);
+}
+
+/**
+ * Sets logger for the suggestions.
+ * @param logger
+ */
+export function setLogger(logger: loggerModule.ILogger) : void {
+    loggerModule.setLogger(logger)
 }

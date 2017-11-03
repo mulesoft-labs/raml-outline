@@ -9,6 +9,7 @@ import _=require("underscore")
 import universe = rp.universes;
 import universehelpers =rp.universeHelpers;
 import commonInterfaces = require("../common/commonInterfaces")
+import loggerModule = require("../common/logger")
 
 export function getDefaultValue(node: hl.IHighLevelNode, property: hl.IProperty) {
     if(property.nameId() === <string>universe.Universe10.TypeDeclaration.properties.required.name) {
@@ -166,10 +167,20 @@ export abstract class PropertyItem extends Item {
 
         var attr=this.node.attr(this.property.nameId());
 
+        loggerModule.getLogger().debugDetail("Attribute found: " + (attr != null ? "true" : "false"),
+            "detailsImpl", "changeDetailValue");
+
         var av=attr.value()!=null ? attr.value().toString() : "";
 
+        loggerModule.getLogger().debugDetail("Setting value " + vl + " while old value is " + av,
+            "detailsImpl", "changeDetailValue");
+
         if (av==vl){
-            return;
+
+            loggerModule.getLogger().debugDetail("Returning due to no real change",
+                "detailsImpl", "changeDetailValue");
+
+            return null;
         }
 
         if (vl.length>0) {
@@ -236,12 +247,14 @@ export abstract class PropertyItem extends Item {
             }
         }
 
-        if (attr.lowLevel() && attr.lowLevel().unit() && attr.lowLevel().unit() != this.node.lowLevel().unit()) {
-            return {
-                uri: attr.lowLevel().unit().path(),
-                text: attr.lowLevel().unit().contents()
-            }
+        loggerModule.getLogger().debugDetail("Returning the change",
+            "detailsImpl", "changeDetailValue");
+
+        return {
+            uri: attr.lowLevel().unit().path(),
+            text: attr.lowLevel().unit().contents()
         }
+
     }
 
     getValue() : string {
