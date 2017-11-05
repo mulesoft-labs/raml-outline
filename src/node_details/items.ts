@@ -751,6 +751,25 @@ export class LowLevelTreeField extends PropertyItem {
     getType() : detailsInterfaces.DetailsItemType {
         return detailsInterfaces.DetailsItemType.TREE;
     }
+
+    toJSON() : detailsInterfaces.DetailsValuedItemJSON {
+
+
+        return <detailsInterfaces.DetailsValuedItemJSON>{
+
+            title : this.getTitle(),
+
+            description : this.getDescription(),
+
+            type : (this.getType()?detailsInterfaces.DetailsItemType[this.getType()]:null),
+
+            error : this.getError(),
+
+            children : _.map(this.getChildren(), child=>child.toJSON()),
+
+            valueText : this.getValue()
+        };
+    }
 }
 
 export class ExampleField extends PropertyItem {
