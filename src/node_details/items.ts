@@ -170,7 +170,7 @@ export abstract class PropertyItem extends Item {
         loggerModule.getLogger().debugDetail("Attribute found: " + (attr != null ? "true" : "false"),
             "detailsImpl", "changeDetailValue");
 
-        var av=attr.value()!=null ? attr.value().toString() : "";
+        var av=(attr && attr.value()!=null) ? attr.value().toString() : "";
 
         loggerModule.getLogger().debugDetail("Setting value " + vl + " while old value is " + av,
             "detailsImpl", "changeDetailValue");
