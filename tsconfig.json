@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "module": "commonjs",
     "lib": [ "dom", "es2015", "scripthost", "es2015.promise" ],
+    "module": "commonjs",
     "declaration": true,
     "noImplicitAny": false,
     "moduleResolution": "node",
-    "removeComments": true,
+    "removeComments": false,
     "sourceMap": true,
     "outDir":"dist/"
   },
