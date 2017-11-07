@@ -88,11 +88,12 @@ export function getRootNode() : hl.IHighLevelNode {
 export function getCurrentNode(position?:number) : hl.IParseResult {
 
     if (_astProvider) {
-        var astProviderSelectedNode = _astProvider.getSelectedNode();
-        if (astProviderSelectedNode) return astProviderSelectedNode;
 
         var root = _astProvider.getASTRoot();
         if (root && position != null) return root.findElementAtOffset(position);
+
+        var astProviderSelectedNode = _astProvider.getSelectedNode();
+        if (astProviderSelectedNode) return astProviderSelectedNode;
     }
 
     if (_editorProvider)

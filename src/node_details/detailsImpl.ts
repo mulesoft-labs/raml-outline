@@ -11,15 +11,9 @@ import universe = rp.universes;
 import universehelpers =rp.universeHelpers;
 import commonInterfaces = require("../common/commonInterfaces")
 import tools = require("../common/tools")
+import loggerModule = require("../common/logger")
 
-// var _astProvider : commonInterfaces.IASTProvider = null;
-//
-// /**
-//  * Sets AST provider. Must be called to use the module.
-//  */
-// export function setASTProvider(astProvider : commonInterfaces.IASTProvider) {
-//     _astProvider = astProvider
-// }
+
 
 function category(p:hl.IProperty,node:hl.IHighLevelNode):string{
     if (p.getAdapter(def.RAMLPropertyService).isKey()||p.isRequired()){
@@ -269,5 +263,71 @@ export function buildItem(parseResults:hl.IParseResult) : detailsInterfaces.Deta
     if (node.definition().getAdapter(def.RAMLService).isUserDefined()||node.definition().isAssignableFrom(universe.Universe10.TypeDeclaration.name)){
         result.addItemToCategory("Type",new itemsImpl.TypeDisplayItem(node))
     }
+    return result;
+}
+
+/**
+ * Finds item by its ID.
+ *
+ * @param root - details root.
+ * @param id - id of the item to find.
+ */
+export function getItemById(root: detailsInterfaces.DetailsItem,
+                            id: string) : detailsInterfaces.DetailsItem {
+    if (root.getId() == id) {
+        return root;
+    }
+
+    if (root.getChildren() == null || root.getChildren().length == 0) {
+        return null;
+    }
+
+    for (const child of root.getChildren()) {
+
+        const childResult = getItemById(child, id);
+
+        if (childResult != null) {
+            return childResult;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Changes the value of details item.
+ * @param position - cursor position
+ * @param itemID - details item ID
+ * @param value - new value
+ */
+export function changeDetailValue(position: number,
+                                  itemID: string,
+                                  value: string | number | boolean): commonInterfaces.IChangedDocument {
+
+    loggerModule.getLogger().debugDetail("Changing value of item " + itemID + " to " + value,
+        "detailsImpl", "changeDetailValue");
+
+    const root = buildItemByPosition(position) as itemsImpl.Item;
+
+    const item = getItemById(root, itemID) as itemsImpl.Item;
+    if (!item) {
+        loggerModule.getLogger().debugDetail("Item not found",
+            "detailsImpl", "changeDetailValue");
+        return null;
+    }
+
+    loggerModule.getLogger().debugDetail("Item found of type " + item.getType(),
+        "detailsImpl", "changeDetailValue");
+
+    const result = item.setValue(value);
+
+    if (result) {
+        loggerModule.getLogger().debugDetail("Result is " + JSON.stringify(result),
+            "detailsImpl", "changeDetailValue");
+    } else {
+        loggerModule.getLogger().debugDetail("Result not found",
+            "detailsImpl", "changeDetailValue");
+    }
+
     return result;
 }
