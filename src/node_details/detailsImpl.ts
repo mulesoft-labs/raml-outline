@@ -13,7 +13,7 @@ import commonInterfaces = require("../common/commonInterfaces")
 import tools = require("../common/tools")
 import loggerModule = require("../common/logger")
 
-
+export type IParseResult = hl.IParseResult;
 
 function category(p:hl.IProperty,node:hl.IHighLevelNode):string{
     if (p.getAdapter(def.RAMLPropertyService).isKey()||p.isRequired()){
