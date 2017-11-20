@@ -250,8 +250,16 @@ export function isTypedStructureNode(node : StructureNode) : node is TypedStruct
  * will be called to determine the node to return detaisl for.
  * @param position - position index in text counting from 0. Optional.
  */
-export function getDetails(position?: number) : detailsInterface.DetailsItem {
+export function getDetails(position?: number): detailsInterface.DetailsItem {
     return detailsImplementation.buildItemByPosition(position);
+}
+
+/**
+ * Gets details for a raml ast node.
+ * @param node - raml ast node.
+ */
+export function buildDetailsItem(node: detailsImplementation.IParseResult): detailsInterface.DetailsItem {
+    return detailsImplementation.buildItem(node);
 }
 
 /**
