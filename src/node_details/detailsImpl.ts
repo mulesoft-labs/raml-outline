@@ -263,6 +263,9 @@ export function buildItem(parseResults:hl.IParseResult) : detailsInterfaces.Deta
     if (node.definition().getAdapter(def.RAMLService).isUserDefined()||node.definition().isAssignableFrom(universe.Universe10.TypeDeclaration.name)){
         result.addItemToCategory("Type",new itemsImpl.TypeDisplayItem(node))
     }
+
+    generateSuggestions(node, result);
+
     return result;
 }
 
@@ -330,4 +333,89 @@ export function changeDetailValue(position: number,
     }
 
     return result;
+}
+
+/**
+ * Runs details action
+ * @param position - cursor position
+ * @param itemID - details item ID
+ */
+export function runDetailsAction(position: number,
+                                  itemID: string): commonInterfaces.IChangedDocument {
+
+    loggerModule.getLogger().debugDetail("Launching details action " + itemID,
+        "detailsImpl", "runDetailsAction");
+
+    const root = buildItemByPosition(position) as itemsImpl.InternalItem;
+
+    const item = getItemById(root, itemID) as itemsImpl.InternalItem;
+    if (!item) {
+        loggerModule.getLogger().debugDetail("Item not found",
+            "detailsImpl", "runDetailsAction");
+        return null;
+    }
+
+    loggerModule.getLogger().debugDetail("Item found of type " + item.getType(),
+        "detailsImpl", "runDetailsAction");
+
+    const result = (item as itemsImpl.ActionItem).run();
+
+    if (result) {
+        loggerModule.getLogger().debugDetail("Result is " + JSON.stringify(result),
+            "detailsImpl", "runDetailsAction");
+    } else {
+        loggerModule.getLogger().debugDetail("Result not found",
+            "detailsImpl", "runDetailsAction");
+    }
+
+    return result;
+}
+
+export function generateSuggestions(node:hl.IHighLevelNode,
+                                    root: itemsImpl.TopLevelNode) : void {
+    var cm=node.definition().allProperties();
+
+    cm.forEach(x=>{
+        if (x.isValueProperty()){
+            return;
+        }
+        if (x.getAdapter(def.RAMLPropertyService).isMerged()){
+            return;
+        }
+        if (_.find(node.lowLevel().children(),y=>y.key()==x.nameId())){
+            return;
+        }
+        if (node.lowLevel().includesContents()) {
+            return;
+        }
+
+        const item = new itemsImpl.InsertActionItem("",x,node)
+        root.addItemToCategory("General", item);
+    })
+    cm.forEach(x=>{
+        if (x.isValueProperty()){
+            return;
+        }
+        if (x.getAdapter(def.RAMLPropertyService).isMerged()){
+            var enums=x.enumOptions();
+            if (enums){
+                enums.forEach(y=>{
+                    if (_.find(node.lowLevel().children(),z=>z.key()==y)){
+                        return;
+                    }
+
+                    if (node.lowLevel().includesContents()) {
+                        return;
+                    }
+
+                    const item = new itemsImpl.InsertActionItem(y,x,node)
+                    root.addItemToCategory("General", item);
+                })
+            }
+            return;
+        }
+    })
+
+    const deleteItem = new itemsImpl.DeleteActionItem(node)
+    root.addItemToCategory("General", deleteItem);
 }

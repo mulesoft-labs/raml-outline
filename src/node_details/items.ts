@@ -7,6 +7,7 @@ import search=rp.search;
 import lowLevel=rp.ll;
 import _=require("underscore")
 import universe = rp.universes;
+import stubs = rp.stubs;
 import universehelpers =rp.universeHelpers;
 import commonInterfaces = require("../common/commonInterfaces")
 import loggerModule = require("../common/logger")
@@ -24,14 +25,23 @@ export function hasDefault(property: hl.IProperty) {
     return false;
 }
 
+export interface InternalItem extends detailsInterfaces.DetailsItem {
+
+    setParent(parent: detailsInterfaces.DetailsItem);
+
+    item(name:string):detailsInterfaces.DetailsItem;
+
+    clearErrors() : void;
+}
+
 /**
  * Abstract item implementation.
  */
-export abstract class Item implements detailsInterfaces.DetailsItem {
+export abstract class Item implements InternalItem {
 
     private title : string;
     private description : string
-    private parent : Item;
+    private parent : detailsInterfaces.DetailsItem;
     private error : string
 
     constructor(title : string , description:string=""){
@@ -49,7 +59,7 @@ export abstract class Item implements detailsInterfaces.DetailsItem {
         return false;
     }
 
-    add(i:Item): void {
+    add(i:detailsInterfaces.DetailsItem): void {
         throw new Error("Not supported")
     }
 
@@ -57,7 +67,7 @@ export abstract class Item implements detailsInterfaces.DetailsItem {
         return this.parent;
     }
 
-    setParent(parent: Item) {
+    setParent(parent: detailsInterfaces.DetailsItem) {
         this.parent = parent;
     }
 
@@ -76,7 +86,7 @@ export abstract class Item implements detailsInterfaces.DetailsItem {
         this.title=t;
     }
 
-    item(name:string):Item{
+    item(name:string):detailsInterfaces.DetailsItem{
         return null;
     }
 
@@ -280,7 +290,7 @@ export abstract class PropertyItem extends Item {
 
             description : this.getDescription(),
 
-            type : (this.getType()?detailsInterfaces.DetailsItemType[this.getType()]:null),
+            type : (this.getType()!==null?detailsInterfaces.DetailsItemType[this.getType()]:null),
 
             error : this.getError(),
 
@@ -310,9 +320,9 @@ export abstract class PropertyItem extends Item {
  */
 export class Category extends Item{
 
-    _children:Item[]=[]
+    _children:InternalItem[]=[]
 
-    add(i:Item){
+    add(i:InternalItem){
         i.setParent(this);
         this._children.push(i);
     }
@@ -327,8 +337,8 @@ export class Category extends Item{
         return this._children.filter(x=>(x instanceof Category));
     }
 
-    item(name:string):Item{
-        var it:Item;
+    item(name:string):detailsInterfaces.DetailsItem{
+        var it:detailsInterfaces.DetailsItem;
         this._children.forEach(x=>{
             if (x.getTitle()==name){
                 it=x;
@@ -402,7 +412,7 @@ export class TopLevelNode extends Category{
         }
         return <Item>item;
     }
-    addItemToCategory(name:string,it:Item){
+    addItemToCategory(name:string,it:InternalItem){
         if (name==null){
             this._children.push(it);
             it.setParent(this);
@@ -817,3 +827,209 @@ export class AttributeTextField extends PropertyItem{
     }
 }
 
+export abstract class ActionItem implements InternalItem {
+    private title : string;
+    private description : string
+    private parent : Item;
+    private error : string
+
+
+    /**
+     * Returns details item subtype.
+     */
+    abstract getSubType() : detailsInterfaces.ActionItemSubType;
+
+    /**
+     * Returns item ID.
+     */
+    abstract getId() : string;
+
+    /**
+     * Runs the action.
+     */
+    abstract run() : commonInterfaces.IChangedDocument;
+
+    /**
+     * Converts this node and its subnodes to JSON, recursivelly.
+     */
+    toJSON() : detailsInterfaces.DetailsActionItemJSON {
+
+        return {
+
+            title : this.getTitle(),
+
+            description : this.getDescription(),
+
+            type : (this.getType()?detailsInterfaces.DetailsItemType[this.getType()]:null),
+
+            error : this.getError(),
+
+            children : [],
+
+            id : this.getId(),
+
+            subType: (this.getSubType()!==null?detailsInterfaces.ActionItemSubType[this.getSubType()]:null),
+        };
+    }
+
+    constructor(title : string , description:string=""){
+        this.title = title;
+        this.description = description;
+    }
+
+    /**
+     * Node type name
+     */
+    getType() : detailsInterfaces.DetailsItemType {
+        return detailsInterfaces.DetailsItemType.DETAILS_ACTION
+    }
+
+    needsSeparateLabel(){
+        return false;
+    }
+
+    add(i:Item): void {
+        throw new Error("Not supported")
+    }
+
+    getParent() : detailsInterfaces.DetailsItem {
+        return this.parent;
+    }
+
+    setParent(parent: Item) {
+        this.parent = parent;
+    }
+
+    getRoot(){
+        if (this.parent){
+            return this.parent.getRoot();
+        }
+        return this;
+    }
+
+    setDescription(desc:string){
+        this.description=desc;
+    }
+
+    setTitle(t:string){
+        this.title=t;
+    }
+
+    item(name:string):detailsInterfaces.DetailsItem{
+        return null;
+    }
+
+    setError(text:string){
+        this.error = text;
+    }
+
+    clearErrors(){
+        this.error = null;
+    }
+
+    /**
+     * Node title.
+     */
+    getTitle() : string {
+        return this.title;
+    }
+
+    /**
+     * Node description
+     */
+    getDescription() : string {
+        return this.description;
+    }
+
+    /**
+     * Error, associated with the node.
+     */
+    getError() : string {
+        return this.error;
+    }
+
+    /**
+     * Node children.
+     */
+    getChildren() : detailsInterfaces.DetailsItem[] {
+        return [];
+    }
+}
+
+export class InsertActionItem extends ActionItem {
+
+    constructor(private value: string, private property:hl.IProperty, private node:hl.IHighLevelNode){
+        super((value!=null&&value.length>0) ? value : property.nameId(), "Insert " + property.nameId());
+    }
+
+    /**
+     * Returns details item subtype.
+     */
+    getSubType() : detailsInterfaces.ActionItemSubType {
+        return (this.value!=null&&this.value.length>0) ?
+            detailsInterfaces.ActionItemSubType.INSERT_VALUE : detailsInterfaces.ActionItemSubType.INSERT;
+    }
+
+    /**
+     * Returns item ID.
+     */
+    getId() : string {
+        return this.node.id() + "#" + this.property.nameId() + "#" + this.value;
+    }
+
+    run(){
+        var rn=<def.NodeClass>this.property.range();
+        var key=this.value;
+        if (this.property.nameId()==universe.Universe10.Method.properties.body.name){
+            key="application/json";
+        }
+        if (this.property.nameId()==universe.Universe10.MethodBase.properties.responses.name){
+            key="200";
+        }
+
+        var newNode=stubs.createStubNode(rn,this.property,key);
+
+        this.node.add(newNode);
+
+        return {
+            uri: this.node.lowLevel().unit().path(),
+            text: this.node.lowLevel().unit().contents()
+        }
+    }
+}
+
+export class DeleteActionItem extends ActionItem {
+
+    constructor(private node:hl.IHighLevelNode){
+        super("Delete");
+    }
+
+    /**
+     * Returns details item subtype.
+     */
+    getSubType() : detailsInterfaces.ActionItemSubType {
+        return detailsInterfaces.ActionItemSubType.DELETE;
+    }
+
+    /**
+     * Returns item ID.
+     */
+    getId() : string {
+        return this.node.id() + "#" + "DELETE_DETAILS_ACTION";
+    }
+
+    run(){
+        const node = this.node;
+
+        if(node.parent()) {
+            node.parent().remove(node);
+        } else {
+            node.lowLevel().unit().updateContent('');
+        }
+
+        return {
+            uri: node.lowLevel().unit().path(),
+            text: node.lowLevel().unit().contents()
+        }
+    }
+}
