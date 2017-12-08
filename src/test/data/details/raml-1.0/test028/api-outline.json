@@ -73,14 +73,6 @@
           "subType": "INSERT"
         },
         {
-          "title": "uses",
-          "description": "Insert uses",
-          "type": "DETAILS_ACTION",
-          "children": [],
-          "id": ".UserJSON#uses#",
-          "subType": "INSERT"
-        },
-        {
           "title": "Delete",
           "description": "",
           "type": "DETAILS_ACTION",

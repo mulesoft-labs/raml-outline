@@ -375,21 +375,27 @@ export function generateSuggestions(node:hl.IHighLevelNode,
                                     root: itemsImpl.TopLevelNode) : void {
     var cm=node.definition().allProperties();
 
-    cm.forEach(x=>{
-        if (x.isValueProperty()){
+    cm.forEach(property=>{
+        if (property.isValueProperty()){
             return;
         }
-        if (x.getAdapter(def.RAMLPropertyService).isMerged()){
+        if (property.getAdapter(def.RAMLPropertyService).isMerged()){
             return;
         }
-        if (_.find(node.lowLevel().children(),y=>y.key()==x.nameId())){
+        if (_.find(node.lowLevel().children(),y=>y.key()==property.nameId())){
             return;
         }
         if (node.lowLevel().includesContents()) {
             return;
         }
 
-        const item = new itemsImpl.InsertActionItem("",x,node)
+        if (property.nameId() == universe.Universe10.Api.properties.uses.name &&
+            !universehelpers.isLibraryBaseSibling(node.definition())) {
+
+            return;
+        }
+
+        const item = new itemsImpl.InsertActionItem("", property, node)
         root.addItemToCategory("General", item);
     })
     cm.forEach(x=>{
