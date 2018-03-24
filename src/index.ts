@@ -89,9 +89,19 @@ export type DetailsValuedItemJSON = detailsInterface.DetailsValuedItemJSON;
 export type DetailsItemWithOptionsJSON = detailsInterface.DetailsItemWithOptionsJSON;
 
 /**
- * Type of details item
+ * Details item pointing to an executable action.
+ */
+export type DetailsActionItemJSON = detailsInterface.DetailsActionItemJSON;
+
+/**
+ * Type of details item.
  */
 export type DetailsItemType = detailsInterface.DetailsItemType;
+
+/**
+ * Subtype for action items.
+ */
+export type ActionItemSubType = detailsInterface.ActionItemSubType;
 
 /**
  * Details tree node.
@@ -298,6 +308,17 @@ export function changeDetailValue(position: number,
                                   value: string | number | boolean): commonInterfaces.IChangedDocument {
 
     return detailsImplementation.changeDetailValue(position, itemID, value);
+}
+
+/**
+ * Runs details action
+ * @param position - cursor position
+ * @param itemID - details item ID
+ */
+export function runDetailsAction(position: number,
+                                 itemID: string): commonInterfaces.IChangedDocument {
+
+    return detailsImplementation.runDetailsAction(position, itemID);
 }
 
 /**

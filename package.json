@@ -1,21 +1,21 @@
 {
   "name": "raml-outline",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "main": "dist/index.js",
   "scripts": {
     "build": "rimraf dist && tsc && npm run generateStructureSuite",
-    "pullall" : "dev-env-installer pullall",
-    "buildall" : "dev-env-installer buildall",
-    "testall" : "dev-env-installer testall",
+    "pullall": "dev-env-installer pullall",
+    "buildall": "dev-env-installer buildall",
+    "testall": "dev-env-installer testall",
     "devInstall": "dev-env-installer install",
-    "test" : "gulp test",
+    "test": "gulp test",
     "generateStructureSuite": "node dist/test/scripts/generateTestSuite.js && rimraf dist && tsc"
   },
   "dependencies": {
     "underscore": "^1.8.3",
-    "raml-1-parser": "1.1.37"
+    "raml-1-parser": "1.1.41"
   },
-  "typings":"dist/index.d.ts",
+  "typings": "dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/mulesoft/raml-structure.git"
@@ -39,10 +39,10 @@
     "gulp-typescript": "3.2.3",
     "typescript": "2.5.2",
     "dev-env-installer": "0.0.14",
-    "rimraf":"2.6.2",
+    "rimraf": "2.6.2",
     "mocha": "4.0.1",
     "chai": "4.1.2",
     "chai-as-promised": "7.1.1",
-    "gulp-istanbul" : "1.1.2"
+    "gulp-istanbul": "1.1.2"
   }
 }

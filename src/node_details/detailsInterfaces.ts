@@ -1,3 +1,5 @@
+import commonInterfaces = require("../common/commonInterfaces")
+
 /**
  * The node of details tree converted to JSON
  */
@@ -57,6 +59,17 @@ export interface DetailsItemWithOptionsJSON extends DetailsValuedItemJSON {
 }
 
 /**
+ * Details item pointing to an executable action.
+ */
+export interface DetailsActionItemJSON extends DetailsItemJSON {
+
+    /**
+     * Action item subtype.
+     */
+    subType : string
+}
+
+/**
  * Type of details item
  */
 export enum DetailsItemType {
@@ -74,7 +87,8 @@ export enum DetailsItemType {
     TYPESELECT,
     JSONEXAMPLE,
     XMLEXAMPLE,
-    ATTRIBUTETEXT
+    ATTRIBUTETEXT,
+    DETAILS_ACTION
 }
 
 /**
@@ -126,4 +140,26 @@ export interface DetailsItem {
      * Returns item ID.
      */
     getId() : string;
+}
+
+/**
+ * Subtype for action items.
+ */
+export enum ActionItemSubType {
+    INSERT,
+    INSERT_VALUE,
+    DELETE
+}
+
+export interface ActionItem extends DetailsItem {
+
+    /**
+     * Runs the action.
+     */
+    run() : commonInterfaces.IChangedDocument;
+
+    /**
+     * Returns details item subtype.
+     */
+    getSubType() : ActionItemSubType;
 }
