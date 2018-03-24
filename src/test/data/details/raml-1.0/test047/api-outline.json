@@ -139,6 +139,22 @@
           "subType": "INSERT_VALUE"
         },
         {
+          "title": "trace",
+          "description": "Insert methods",
+          "type": "DETAILS_ACTION",
+          "children": [],
+          "id": "./test#methods#trace",
+          "subType": "INSERT_VALUE"
+        },
+        {
+          "title": "connect",
+          "description": "Insert methods",
+          "type": "DETAILS_ACTION",
+          "children": [],
+          "id": "./test#methods#connect",
+          "subType": "INSERT_VALUE"
+        },
+        {
           "title": "Delete",
           "description": "",
           "type": "DETAILS_ACTION",
