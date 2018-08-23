@@ -37,7 +37,7 @@
     "gulp-rename": "^1.2.2",
     "gulp-sourcemaps": "2.6.1",
     "gulp-typescript": "3.2.3",
-    "typescript": "2.5.2",
+    "typescript": "2.8.4",
     "dev-env-installer": "0.0.14",
     "rimraf": "2.6.2",
     "mocha": "4.0.1",
